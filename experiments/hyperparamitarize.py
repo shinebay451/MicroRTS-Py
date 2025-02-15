@@ -3,8 +3,8 @@ import subprocess
 
 import torch
 
-TOTAL_TIMESTEPS = 10000
-NUM_TRIALS = 1
+TOTAL_TIMESTEPS = 100000
+NUM_TRIALS = 50
 
 
 def run_rewards_parametrization():
@@ -37,7 +37,6 @@ def run_rewards_parametrization():
                 "ppo_gridnet.py",
                 "--total-timesteps",
                 str(TOTAL_TIMESTEPS),
-                "--cuda",
                 "--seed", "1",
                 "--prod-mode",
                 "--wandb-project-name", "microrts-py",
