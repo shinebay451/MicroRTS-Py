@@ -14,7 +14,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from gym.spaces import MultiDiscrete
-from stable_baselines3.common.vec_env import VecEnvWrapper, VecMonitor, VecVideoRecorder
+from stable_baselines3.common.vec_env import (VecEnvWrapper, VecMonitor,
+                                              VecVideoRecorder)
 from torch.distributions.categorical import Categorical
 from torch.utils.tensorboard import SummaryWriter
 
@@ -49,6 +50,7 @@ def parse_args():
         help="the entity (team) of wandb's project")
 
     # Algorithm specific arguments
+    parser.add_argument('--reward-weight', type=float, nargs='+', default=[10.0, 1.0, 1.0, 0.2, 1.0, 4.0],)
     parser.add_argument('--partial-obs', type=lambda x: bool(strtobool(x)), default=False, nargs='?', const=True,
         help='if toggled, the game will have partial observability')
     parser.add_argument('--n-minibatch', type=int, default=4,
@@ -211,7 +213,8 @@ class Agent(nn.Module):
             ]
             action = torch.stack([categorical.sample() for categorical in multi_categoricals])
         else:
-            invalid_action_masks = invalid_action_masks.view(-1, invalid_action_masks.shape[-1])
+            invalid_action_masks = invalid_action_masks.view(
+                -1, invalid_action_masks.shape[-1])
             action = action.view(-1, action.shape[-1]).T
             split_invalid_action_masks = torch.split(invalid_action_masks, envs.action_plane_space.nvec.tolist(), dim=1)
             multi_categoricals = [
@@ -339,7 +342,7 @@ if __name__ == "__main__":
         + [microrts_ai.lightRushAI for _ in range(min(args.num_bot_envs, 2))]
         + [microrts_ai.workerRushAI for _ in range(min(args.num_bot_envs, 2))],
         map_paths=[args.train_maps[0]],
-        reward_weight=np.array([10.0, 1.0, 1.0, 0.2, 1.0, 4.0]),
+        reward_weight=np.array(args.reward_weight),
         cycle_maps=args.train_maps,
     )
     envs = MicroRTSStatsRecorder(envs, args.gamma)
