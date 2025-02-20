@@ -1,4 +1,5 @@
 #!/bin/sh
+#SBATCH --gpus-per-node=1
 
 cd "/home/cm787623/Documents/repositories/MicroRTS-Py/experiments" || exit
 source /home/cm787623/.cache/pypoetry/virtualenvs/gym-microrts-ZnOR3e21-py3.9/bin/activate
