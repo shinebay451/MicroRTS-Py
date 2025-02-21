@@ -1,10 +1,9 @@
 #!/bin/sh
 #SBATCH --gpus-per-node=1
+#SBATCH --time=2-00:00:00
 
 cd "/home/cm787623/Documents/repositories/MicroRTS-Py/experiments" || exit
 source /home/cm787623/.cache/pypoetry/virtualenvs/gym-microrts-ZnOR3e21-py3.9/bin/activate
-
-export JAVA_HOME="/usr/bin/java"
 
 python ppo_gridnet.py \
   --total-timesteps 100000000 \
