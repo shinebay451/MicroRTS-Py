@@ -160,7 +160,7 @@ if __name__ == "__main__":
     for update in range(starting_update, args.num_updates + 1):
         # TRY NOT TO MODIFY: prepare the execution of the game.
         for step in range(0, args.num_steps):
-            envs.render()
+            envs.render(mode="rgb_array")
             global_step += 1 * args.num_envs
             # ALGO LOGIC: put action logic here
             with torch.no_grad():
