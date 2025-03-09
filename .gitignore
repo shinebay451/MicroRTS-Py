@@ -137,3 +137,6 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+# training data
+episode_data/
