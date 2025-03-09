@@ -1,0 +1,74 @@
+import argparse
+
+from DataCollector import DecisionTransformerGymDataCollator
+from datasets import DatasetDict
+from TrainableDT import TrainableDT
+from transformers import DecisionTransformerConfig, Trainer, TrainingArguments
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Training script for DT GridNet")
+    parser.add_argument('--dataset', type=str, required=True,
+                        help='Path to stored dataset')
+    parser.add_argument('--num-train-epochs', type=int,
+                        default=120, help='Number of training epochs')
+    parser.add_argument('--per-device-train-batch-size', type=int,
+                        default=16, help='Batch size per device during training')
+    parser.add_argument('--learning-rate', type=float,
+                        default=1e-4, help='Learning rate')
+    parser.add_argument('--weight-decay', type=float,
+                        default=1e-4, help='Weight decay')
+    parser.add_argument('--warmup-ratio', type=float,
+                        default=0.1, help='Warmup ratio')
+    parser.add_argument('--optim', type=str,
+                        default="adamw_torch", help='Optimizer to use')
+    parser.add_argument('--max-grad-norm', type=float,
+                        default=0.25, help='Maximum gradient norm for clipping')
+    parser.add_argument('--gradient-accumulation-steps', type=int, default=4,
+                        help='Number of updates steps to accumulate before performing a backward/update pass')
+    parser.add_argument('--mixed-precision', action='store_true', default=False,
+                        help='Use mixed precision training')
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    try:
+        dataset = DatasetDict.load_from_disk(args.dataset)
+    except:
+        raise FileNotFoundError("Dataset not found")
+    collector = DecisionTransformerGymDataCollator(dataset["train"])
+
+    config = DecisionTransformerConfig(
+        state_dim=collector.state_dim,
+        act_dim=collector.act_dim
+    )
+    model = TrainableDT(config)
+
+    agent_name = args.dataset.split("/")[-1]
+    output_dir = f"trainer_output/dt-{agent_name}"
+
+    training_args = TrainingArguments(
+        output_dir=output_dir,
+        remove_unused_columns=False,
+        num_train_epochs=args.num_train_epochs,
+        per_device_train_batch_size=args.per_device_train_batch_size,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+        warmup_ratio=args.warmup_ratio,
+        optim=args.optim,
+        max_grad_norm=args.max_grad_norm,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        fp16=args.mixed_precision,
+    )
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset["train"],
+        data_collator=collector,
+    )
+
+    trainer.train()

@@ -140,3 +140,4 @@ dmypy.json
 
 # training data
 episode_data/
+trainer_output/
