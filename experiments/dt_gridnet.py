@@ -1,8 +1,8 @@
 import argparse
 
-from DataCollector import DecisionTransformerGymDataCollator
+from classes.DataCollector import DecisionTransformerGymDataCollator
+from classes.TrainableDT import TrainableDT
 from datasets import DatasetDict
-from TrainableDT import TrainableDT
 from transformers import DecisionTransformerConfig, Trainer, TrainingArguments
 
 
