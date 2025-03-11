@@ -2,6 +2,7 @@ import argparse
 import os
 import random
 import shutil
+import subprocess
 import time
 from distutils.util import strtobool
 
@@ -87,7 +88,7 @@ def save_dataset(episodes, save_path):
     combined_dataset.save_to_disk(temp_save_path)
 
     if os.path.exists(save_path):
-        shutil.rmtree(save_path)
+        subprocess.run(['rm', '-rf', save_path], check=True)
     shutil.move(temp_save_path, save_path)
 
 if __name__ == "__main__":
