@@ -55,6 +55,12 @@ def PORangedRush(utt):
 # Competition AIs
 
 
+def agentP(utt):
+    from agentP import AgentP
+
+    return AgentP(utt)
+
+
 def coacAI(utt):
     from ai.coac import CoacAI
 

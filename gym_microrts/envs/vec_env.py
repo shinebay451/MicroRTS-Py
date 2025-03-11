@@ -101,8 +101,10 @@ class MicroRTSGridModeVecEnv:
         if not jpype._jpype.isStarted():
             registerDomain("ts", alias="tests")
             registerDomain("ai")
+            registerDomain("agentP")
             jars = [
                 "microrts.jar",
+                "lib/bots/AgentP.jar",
                 "lib/bots/Coac.jar",
                 "lib/bots/Droplet.jar",
                 "lib/bots/GRojoA3N.jar",
