@@ -118,6 +118,7 @@ if __name__ == "__main__":
         ai2s=ais,
         map_paths=["maps/16x16/basesWorkers16x16A.xml"],
         reward_weight=np.array([10.0, 1.0, 1.0, 0.2, 1.0, 4.0]),
+        autobuild=False,
     )
     envs = MicroRTSStatsRecorder(envs)
     envs = VecMonitor(envs)
