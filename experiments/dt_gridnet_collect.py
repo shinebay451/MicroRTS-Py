@@ -1,11 +1,13 @@
 import argparse
+import os
 import random
+import shutil
 import time
 from distutils.util import strtobool
 
 import numpy as np
 import torch
-from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict, concatenate_datasets
 from stable_baselines3.common.vec_env import VecMonitor
 from tqdm import tqdm
 
@@ -60,6 +62,34 @@ def decode_obs(observation):
 
     return decoded_observations
 
+
+def save_dataset(episodes, save_path):
+    """
+    Save the episodes to a dataset
+    """
+    data_dict = {
+        "observations": [episode["observations"] for episode in episodes],
+        "actions": [episode["actions"] for episode in episodes],
+        "rewards": [episode["rewards"] for episode in episodes],
+        "dones": [episode["dones"] for episode in episodes],
+    }
+    new_dataset = Dataset.from_dict(data_dict)
+
+    try:
+        existing_dataset = DatasetDict.load_from_disk(save_path)
+        combined_dataset = DatasetDict({
+            "train": concatenate_datasets([existing_dataset["train"], new_dataset])
+        })
+    except:
+        combined_dataset = DatasetDict({"train": new_dataset})
+
+    temp_save_path = save_path + "_temp"
+    combined_dataset.save_to_disk(temp_save_path)
+
+    if os.path.exists(save_path):
+        shutil.rmtree(save_path)
+    shutil.move(temp_save_path, save_path)
+
 if __name__ == "__main__":
     args = parse_args()
 
@@ -101,6 +131,9 @@ if __name__ == "__main__":
 
     # TRY NOT TO MODIFY: start the game
     start_time = time.time()
+
+    p0_name = args.agent_model_path.split("/")[-1].split(".")[0]
+    save_path = f"episode_data/{p0_name}-{time.time()}".replace(".", "")
 
     # CRASH AND RESUME LOGIC:
     agent.load_state_dict(torch.load(
@@ -183,20 +216,13 @@ if __name__ == "__main__":
             if ds[0]:
                 break 
 
-
         episodes.append(episode_data)
 
-    data_dict = {
-        "observations": [episode["observations"] for episode in episodes],
-        "actions": [episode["actions"] for episode in episodes],
-        "rewards": [episode["rewards"] for episode in episodes],
-        "dones": [episode["dones"] for episode in episodes],
-    }
+        if (update + 1) % 100 == 0:
+            save_dataset(episodes, save_path)
+            episodes = []
 
-    dataset = Dataset.from_dict(data_dict)
-    dataset = DatasetDict({"train": dataset})
-    p0_name = args.agent_model_path.split("/")[-1].split(".")[0]
-    save_path = f"episode_data/{p0_name}-{time.time()}".replace(".", "")
-    dataset.save_to_disk(save_path)
+    if len(episodes) > 0:
+        save_dataset(episodes, save_path)
 
     envs.close()
