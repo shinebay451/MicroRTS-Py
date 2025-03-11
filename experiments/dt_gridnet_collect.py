@@ -64,7 +64,7 @@ def decode_obs(observation):
     return decoded_observations
 
 
-def save_dataset(episodes, save_path):
+def save_dataset(episodes, save_path, save_num):
     """
     Save the episodes to a dataset
     """
@@ -76,20 +76,19 @@ def save_dataset(episodes, save_path):
     }
     new_dataset = Dataset.from_dict(data_dict)
 
+    prev_save_path = f"{save_path}/save_{save_num-1}"
+    next_save_path = f"{save_path}/save_{save_num}"
+
     try:
-        existing_dataset = DatasetDict.load_from_disk(save_path)
+        existing_dataset = DatasetDict.load_from_disk(prev_save_path)
         combined_dataset = DatasetDict({
             "train": concatenate_datasets([existing_dataset["train"], new_dataset])
         })
     except:
         combined_dataset = DatasetDict({"train": new_dataset})
 
-    temp_save_path = save_path + "_temp"
-    combined_dataset.save_to_disk(temp_save_path)
+    combined_dataset.save_to_disk(next_save_path)
 
-    if os.path.exists(save_path):
-        subprocess.run(['rm', '-rf', save_path], check=True)
-    shutil.move(temp_save_path, save_path)
 
 if __name__ == "__main__":
     args = parse_args()
@@ -105,7 +104,9 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = args.torch_deterministic
+
     max_ep_len = 2000
+    save_freq = 100
 
     ais = []
     if args.ai:
@@ -136,6 +137,7 @@ if __name__ == "__main__":
 
     p0_name = args.agent_model_path.split("/")[-1].split(".")[0]
     save_path = f"episode_data/{p0_name}-{time.time()}".replace(".", "")
+    current_save_num = 0
 
     # CRASH AND RESUME LOGIC:
     agent.load_state_dict(torch.load(
@@ -220,8 +222,9 @@ if __name__ == "__main__":
 
         episodes.append(episode_data)
 
-        if (update + 1) % 100 == 0:
-            save_dataset(episodes, save_path)
+        if (update + 1) % save_freq == 0:
+            save_dataset(episodes, save_path, current_save_num)
+            current_save_num += 1
             episodes = []
 
     if len(episodes) > 0:
