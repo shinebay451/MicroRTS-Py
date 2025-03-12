@@ -356,6 +356,7 @@ class MicroRTSBotVecEnv(MicroRTSGridModeVecEnv):
 
         # read map
         self.microrts_path = os.path.join(gym_microrts.__path__[0], "microrts")
+        self.microrts_py_path = os.path.dirname(gym_microrts.__path__[0])
         if not os.path.exists(f"{self.microrts_path}/README.md"):
             print(MICRORTS_CLONE_MESSAGE)
             os.system(f"git submodule update --init --recursive")
@@ -380,6 +381,7 @@ class MicroRTSBotVecEnv(MicroRTSGridModeVecEnv):
             registerDomain("ts", alias="tests")
             registerDomain("ai")
             registerDomain("rts")
+
             jars = [
                 "microrts.jar",
                 "lib/bots/Coac.jar",
@@ -393,6 +395,13 @@ class MicroRTSBotVecEnv(MicroRTSGridModeVecEnv):
             ]
             for jar in jars:
                 jpype.addClassPath(os.path.join(self.microrts_path, jar))
+
+            registerDomain("agentP")
+
+            extra_jars = ["extra_bots/AgentP.jar"]
+            for jar in extra_jars:
+                jpype.addClassPath(os.path.join(self.microrts_py_path, jar))
+
             jpype.startJVM(*jvm_args, convertStrings=False)
 
         # start microrts client
