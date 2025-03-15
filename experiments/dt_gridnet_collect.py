@@ -15,8 +15,7 @@ from gym_microrts import microrts_ai  # noqa
 def parse_args():
     # fmt: off
     parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', type=int, default=1,
-        help='seed of the experiment')
+    parser.add_argument('--seed', type=int, help='seed of the experiment')
     parser.add_argument('--torch-deterministic', type=lambda x: bool(strtobool(x)), default=True, nargs='?', const=True,
         help='if toggled, `torch.backends.cudnn.deterministic=False`')
     parser.add_argument('--cuda', type=lambda x: bool(strtobool(x)), default=True, nargs='?', const=True,
@@ -41,24 +40,46 @@ def parse_args():
     args.num_envs = args.num_selfplay_envs + args.num_bot_envs
     return args
 
+
 def decode_obs(observation):
     """
     Convert observation from one hot encoding to integer encoding
     """
     decoded_observations = []
-    for i in range(len(observation)): # for each grid slot
+    for unit_obs in observation: # for each grid slot
         obs = np.array([
-            np.concatenate((observation[i][0:5], np.zeros(3))),   # hit points
-            np.concatenate((observation[i][5:10], np.zeros(3))),  # resources
-            np.concatenate((observation[i][10:13], np.zeros(5))), # owner
-            observation[i][13:21],                                # unit types
-            np.concatenate((observation[i][21:27], np.zeros(2))), # current action
-            np.concatenate((observation[i][27:29], np.zeros(6))), # terrain
+            np.concatenate((unit_obs[0:5], np.zeros(3))),   # hit points
+            np.concatenate((unit_obs[5:10], np.zeros(3))),  # resources
+            np.concatenate((unit_obs[10:13], np.zeros(5))), # owner
+            unit_obs[13:21],                                # unit types
+            np.concatenate((unit_obs[21:27], np.zeros(2))), # current action
+            np.concatenate((unit_obs[27:29], np.zeros(6))), # terrain
         ])
         decoded_obs = np.argmax(obs, axis=1)
         decoded_observations.extend(decoded_obs.tolist())
 
     return decoded_observations
+
+
+def encode_action(action):
+    """
+    Convert action from integer encoding to one hot encoding
+    """
+    encoded_actions = []
+    for unit_act in action:
+        act = [
+            [1 if i == unit_act[0] else 0 for i in range(6)],   # action type
+            [1 if i == unit_act[1] else 0 for i in range(4)],   # move parameter
+            [1 if i == unit_act[2] else 0 for i in range(4)],   # harvest parameter
+            [1 if i == unit_act[3] else 0 for i in range(4)],   # return parameter
+            [1 if i == unit_act[4] else 0 for i in range(4)],   # produce direction parameter
+            [1 if i == unit_act[5] else 0 for i in range(7)],   # produce type parameter
+            [1 if i == unit_act[6] else 0 for i in range(49)],  # relative attack position
+        ]
+        for a in act:
+            encoded_actions.extend(a)
+
+    return encoded_actions
 
 
 def save_dataset(episodes, save_path, save_num):
@@ -175,7 +196,9 @@ if __name__ == "__main__":
                     episode_data["observations"].append(
                         decode_obs(next_obs.cpu().numpy().reshape(mapsize, -1))
                     )
-                    episode_data["actions"].append(action.cpu().numpy().flatten().tolist())
+                    episode_data["actions"].append(
+                        encode_action(action.cpu().numpy().reshape(mapsize, -1))
+                    )
 
                 else:
                     p1_obs = next_obs[::2]
@@ -184,14 +207,16 @@ if __name__ == "__main__":
                     p2_mask = invalid_action_masks[1::2]
 
                     episode_data["observations"].append(
-                        decode_obs(next_obs.cpu().numpy().reshape(mapsize, -1))
+                        decode_obs(p1_obs.cpu().numpy().reshape(mapsize, -1))
                     )
 
                     p1_action, _, _, _, _ = agent.get_action_and_value(
                         p1_obs, envs=envs, invalid_action_masks=p1_mask, device=device
                     )
 
-                    episode_data["actions"].append(p1_action.cpu().numpy().flatten().tolist())
+                    episode_data["actions"].append(
+                        encode_action(p1_action.cpu().numpy().reshape(mapsize, -1))
+                    )
 
                     p2_action, _, _, _, _ = agent2.get_action_and_value(
                         p2_obs, envs=envs, invalid_action_masks=p2_mask, device=device
@@ -225,6 +250,6 @@ if __name__ == "__main__":
             episodes = []
 
     if len(episodes) > 0:
-        save_dataset(episodes, save_path)
+        save_dataset(episodes, current_save_num)
 
     envs.close()
