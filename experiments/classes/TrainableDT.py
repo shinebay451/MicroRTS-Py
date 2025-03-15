@@ -1,4 +1,4 @@
-import torch
+import torch.nn.functional as F
 from transformers import DecisionTransformerModel
 
 
@@ -18,9 +18,10 @@ class TrainableDT(DecisionTransformerModel):
         action_targets = action_targets.reshape(-1,
                                                 act_dim)[attention_mask.reshape(-1) > 0]
 
-        loss = torch.mean((actions_preds - action_targets) ** 2)
+        # cross entropy loss
+        loss = F.cross_entropy(actions_preds, action_targets)
 
-        return {"loss": loss}
+        return {"loss": loss, "logits": action_preds}
 
     def original_forward(self, **kwargs):
         return super().forward(**kwargs)

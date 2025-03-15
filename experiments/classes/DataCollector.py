@@ -9,9 +9,8 @@ class DecisionTransformerGymDataCollator:
     return_tensors: str = "pt"
     max_len: int = 100  # subsets of the episode we use for training
     state_dim: int = 1536  # size of state space
-    act_dim: int = 1792  # size of action space
+    act_dim: int = 19968  # size of action space
     max_ep_len: int = 2000  # max episode length in the dataset
-    scale: float = 1000.0  # normalization of rewards/returns
     state_mean: np.array = None  # to store state means
     state_std: np.array = None  # to store state stds
     p_sample: np.array = None  # a distribution to take account trajectory lengths
@@ -96,7 +95,7 @@ class DecisionTransformerGymDataCollator:
             d[-1] = np.concatenate([np.ones((1, self.max_len - tlen))
                                    * 2, d[-1]], axis=1)
             rtg[-1] = np.concatenate([np.zeros((1, self.max_len - tlen, 1)),
-                                     rtg[-1]], axis=1) / self.scale
+                                     rtg[-1]], axis=1)
             timesteps[-1] = np.concatenate(
                 [np.zeros((1, self.max_len - tlen)), timesteps[-1]], axis=1)
             mask.append(np.concatenate(

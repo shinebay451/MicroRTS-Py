@@ -47,11 +47,12 @@ if __name__ == "__main__":
     )
     model = TrainableDT(config)
 
-    agent_name = args.dataset.split("/")[-1]
-    output_dir = f"trainer_output/dt-{agent_name}"
+    agent_name = args.dataset.split("/")[-2]
+    output_dir = f"models/dt-{agent_name}"
 
     training_args = TrainingArguments(
         output_dir=output_dir,
+        logging_steps=10,
         remove_unused_columns=False,
         num_train_epochs=args.num_train_epochs,
         per_device_train_batch_size=args.per_device_train_batch_size,
