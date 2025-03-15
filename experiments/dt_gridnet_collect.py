@@ -41,45 +41,69 @@ def parse_args():
     return args
 
 
-def decode_obs(observation):
+def decode_obs(observation: torch.Tensor):
     """
-    Convert observation from one hot encoding to integer encoding
+    Convert observation from one hot encoding to integer encoding.
     """
-    decoded_observations = []
-    for unit_obs in observation: # for each grid slot
-        obs = np.array([
-            np.concatenate((unit_obs[0:5], np.zeros(3))),   # hit points
-            np.concatenate((unit_obs[5:10], np.zeros(3))),  # resources
-            np.concatenate((unit_obs[10:13], np.zeros(5))), # owner
-            unit_obs[13:21],                                # unit types
-            np.concatenate((unit_obs[21:27], np.zeros(2))), # current action
-            np.concatenate((unit_obs[27:29], np.zeros(6))), # terrain
-        ])
-        decoded_obs = np.argmax(obs, axis=1)
-        decoded_observations.extend(decoded_obs.tolist())
+    decoded_observations = torch.zeros(
+        (observation.size(0), 6),
+        dtype=torch.int,
+        device=observation.device
+    )
+    slices = [
+        (0, 5),    # hit points
+        (5, 10),   # resources
+        (10, 13),  # owner
+        (13, 21),  # unit types
+        (21, 27),  # current action
+        (27, 29)   # terrain
+    ]
+    paddings = [
+        3,  # hit points
+        3,  # resources
+        5,  # owner
+        0,  # unit types
+        2,  # current action
+        6   # terrain
+    ]
+    current_pos = 0
 
-    return decoded_observations
+    for unit_obs in observation:  # for each grid slot
+        obs = []
+        for (start, end), pad in zip(slices, paddings):
+            component = unit_obs[start:end]
+            if pad > 0:
+                component = torch.cat(
+                    (component, torch.zeros(pad, device=observation.device))
+                )
+            obs.append(component)
+
+        obs = torch.stack(obs)
+        decoded_obs = torch.argmax(obs, dim=1)
+        decoded_observations[current_pos, :] = decoded_obs
+        current_pos += 1
+
+    return decoded_observations.flatten()
 
 
-def encode_action(action):
+def encode_action(action: torch.Tensor):
     """
-    Convert action from integer encoding to one hot encoding
+    Convert action from integer encoding to one hot encoding.
     """
-    encoded_actions = []
-    for unit_act in action:
-        act = [
-            [1 if i == unit_act[0] else 0 for i in range(6)],   # action type
-            [1 if i == unit_act[1] else 0 for i in range(4)],   # move parameter
-            [1 if i == unit_act[2] else 0 for i in range(4)],   # harvest parameter
-            [1 if i == unit_act[3] else 0 for i in range(4)],   # return parameter
-            [1 if i == unit_act[4] else 0 for i in range(4)],   # produce direction parameter
-            [1 if i == unit_act[5] else 0 for i in range(7)],   # produce type parameter
-            [1 if i == unit_act[6] else 0 for i in range(49)],  # relative attack position
-        ]
-        for a in act:
-            encoded_actions.extend(a)
+    sizes = [6, 4, 4, 4, 4, 7, 49]
+    encoded_actions = torch.zeros(
+        (action.size(0), sum(sizes)),
+        dtype=torch.int,
+        device=action.device
+    )
+    current_pos = 0
 
-    return encoded_actions
+    for i, size in enumerate(sizes):
+        one_hot = torch.nn.functional.one_hot(action[:, i], num_classes=size).float()
+        encoded_actions[:, current_pos:current_pos + size] = one_hot
+        current_pos += size
+
+    return encoded_actions.flatten()
 
 
 def save_dataset(episodes, save_path, save_num):
@@ -171,6 +195,7 @@ if __name__ == "__main__":
         print(param_tensor, "\t", agent.state_dict()[param_tensor].size())
     total_params = sum([param.nelement() for param in agent.parameters()])
     print("Model's total parameters:", total_params)
+    print("Using device:", device)
 
     next_obs = torch.Tensor(envs.reset()).to(device)
 
@@ -194,10 +219,10 @@ if __name__ == "__main__":
                     )
 
                     episode_data["observations"].append(
-                        decode_obs(next_obs.cpu().numpy().reshape(mapsize, -1))
+                        decode_obs(next_obs.view(mapsize, -1))
                     )
                     episode_data["actions"].append(
-                        encode_action(action.cpu().numpy().reshape(mapsize, -1))
+                        encode_action(action.view(mapsize, -1))
                     )
 
                 else:
@@ -207,7 +232,7 @@ if __name__ == "__main__":
                     p2_mask = invalid_action_masks[1::2]
 
                     episode_data["observations"].append(
-                        decode_obs(p1_obs.cpu().numpy().reshape(mapsize, -1))
+                        decode_obs(p1_obs.view(mapsize, -1))
                     )
 
                     p1_action, _, _, _, _ = agent.get_action_and_value(
@@ -215,7 +240,7 @@ if __name__ == "__main__":
                     )
 
                     episode_data["actions"].append(
-                        encode_action(p1_action.cpu().numpy().reshape(mapsize, -1))
+                        encode_action(p1_action.view(mapsize, -1))
                     )
 
                     p2_action, _, _, _, _ = agent2.get_action_and_value(
@@ -250,6 +275,6 @@ if __name__ == "__main__":
             episodes = []
 
     if len(episodes) > 0:
-        save_dataset(episodes, current_save_num)
+        save_dataset(episodes, save_path, current_save_num)
 
     envs.close()
