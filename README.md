@@ -19,24 +19,18 @@ MicroRTS-Py will eventually be updated, maintained, and made compliant with the 
 
 Prerequisites:
 * Python 3.8+
-* [Poetry](https://python-poetry.org)
+* [UV](https://github.com/astral-sh/uv)
 * Java 8.0+
 * FFmpeg (for video recording utilities)
 
 ```bash
-$ git clone --recursive https://github.com/Farama-Foundation/MicroRTS-Py.git && \
+$ git clone --recursive https://github.com/Colinster327/MicroRTS-Py.git && \
 cd MicroRTS-Py
-poetry install
-# The `poetry install` command above creates a virtual environment for us, in which all the dependencies are installed.
-# We can use `poetry shell` to create a new shell in which this environment is activated. Once we are done working with
-# MicroRTS, we can leave it again using `exit`.
-poetry shell
-# By default, the torch wheel is built with CUDA 10.2. If you are using newer NVIDIA GPUs (e.g., 3060 TI), you may need to specifically install CUDA 11.3 wheels by overriding the torch dependency with pip:
-# poetry run pip install "torch==1.12.1" --upgrade --extra-index-url https://download.pytorch.org/whl/cu113
+uv venv --python 3.9
+source .venv/bin/activate
+uv pip install -r requirements.txt
 python hello_world.py
 ```
-
-If the `poetry install` command gets stuck on a Linux machine, [it may help to first run](https://github.com/python-poetry/poetry/issues/8623): `export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`.
 
 To train an agent, run the following
 
