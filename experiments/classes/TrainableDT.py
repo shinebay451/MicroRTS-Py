@@ -14,10 +14,16 @@ class TrainableDT(DecisionTransformerModel):
         action_targets = kwargs["actions"]
         attention_mask = kwargs["attention_mask"]
         act_dim = action_preds.shape[2]
-        actions_preds = action_preds.reshape(-1,
-                                             act_dim)[attention_mask.reshape(-1) > 0]
+        action_preds = action_preds.reshape(-1,
+                                            act_dim)[attention_mask.reshape(-1) > 0]
         action_targets = action_targets.reshape(-1,
                                                 act_dim)[attention_mask.reshape(-1) > 0]
+        action_preds = action_preds.reshape(-1, 78)
+        probs = torch.zeros_like(
+            action_preds,
+            dtype=torch.float32,
+            device=action_preds.device
+        )
 
         slices = [
             (0, 6),    # action type
@@ -30,13 +36,13 @@ class TrainableDT(DecisionTransformerModel):
         ]
 
         for start, end in slices:
-            action_preds[:, start:end] = F.softmax(
+            probs[:, start:end] = F.softmax(
                 action_preds[:, start:end], dim=1)
 
         # cross entropy loss
-        loss = F.cross_entropy(actions_preds, action_targets)
+        loss = F.cross_entropy(probs.reshape(-1, act_dim), action_targets)
 
-        return {"loss": loss, "logits": action_preds}
+        return {"loss": loss, "logits": action_preds.reshape(-1, act_dim)}
 
     def original_forward(self, **kwargs):
         filtered_kwargs = {k: v for k,
@@ -47,7 +53,7 @@ class TrainableDT(DecisionTransformerModel):
         mask = kwargs["invalid_action_mask"]
         mask.reshape(-1, act_dim)
         mask[mask == 0] = -9e8
-        action_pred = action_preds.reshape(-1, act_dim)[-1]
+        action_pred = action_preds.reshape(-1, act_dim)[-1]  # next action
         action_pred = action_pred.reshape(-1, 78)  # 78 action encodings
         action_pred += mask  # mask invalid actions
 
