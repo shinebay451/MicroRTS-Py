@@ -48,10 +48,8 @@ def parse_args():
         help='if toggled, the game will have partial observability')
     parser.add_argument('--num-steps', type=int, default=256,
         help='the number of steps per game environment')
-    parser.add_argument("--agent-model-path", type=str, default="gym-microrts-static-files/agent_sota.pt",
-        help="the path to the agent's model")
-    parser.add_argument("--agent2-model-path", type=str, default="gym-microrts-static-files/agent_sota.pt",
-        help="the path to the agent's model")
+    parser.add_argument("--agent-model-path", type=str, help="the path to the agent's model")
+    parser.add_argument("--agent2-model-path", type=str, help="the path to the agent's model")
     parser.add_argument('--ai', type=str, default="",
         help='the opponent AI to evaluate against')
     parser.add_argument('--num-episodes', type=int, default=10, help='number of episodes to play')
@@ -70,7 +68,7 @@ def parse_args():
     return args
 
 
-def get_action(model, states, actions, returns_to_go, timesteps):
+def get_action(model, states, actions, returns_to_go, timesteps, invalid_action_mask):
     states = states.reshape(1, -1, model.config.state_dim)
     actions = actions.reshape(1, -1, model.config.act_dim)
     returns_to_go = returns_to_go.reshape(1, -1, 1)
@@ -100,6 +98,7 @@ def get_action(model, states, actions, returns_to_go, timesteps):
         returns_to_go=returns_to_go,
         timesteps=timesteps,
         attention_mask=attention_mask,
+        invalid_action_mask=invalid_action_mask,
         return_dict=False,
     )
 
@@ -237,7 +236,7 @@ if __name__ == "__main__":
     # variables for decision transformer
     TARGET_RETURN = 10
     dataset = DatasetDict.load_from_disk(
-        "episode_data/test-agent-1741653248523471")
+        "episode_data/cm-mcrp-1742170770231193/save_0")
     collector = DecisionTransformerGymDataCollator(dataset["train"])
 
     ais = []
@@ -309,13 +308,15 @@ if __name__ == "__main__":
                     actions,
                     target_return,
                     timesteps,
+                    invalid_action_masks[0]
                 )
                 actions[-1] = p1_action
 
                 action = torch.zeros(
-                    (args.num_envs, p2_action.shape[1], p2_action.shape[2]))
+                    (args.num_envs, mapsize, 7), device=device)
 
-                action[::2] = decode_action(p1_action.view(mapsize, -1))
+                action[::2] = decode_action(
+                    p1_action.view(mapsize, -1)).view(1, mapsize, -1)
 
                 if args.agent2_model_path:
                     p2_obs = next_obs[1::2]

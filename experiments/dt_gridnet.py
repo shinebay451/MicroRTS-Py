@@ -1,4 +1,5 @@
 import argparse
+import time
 
 from classes.DataCollector import DecisionTransformerGymDataCollator
 from classes.TrainableDT import TrainableDT
@@ -43,12 +44,15 @@ if __name__ == "__main__":
 
     config = DecisionTransformerConfig(
         state_dim=collector.state_dim,
-        act_dim=collector.act_dim
+        act_dim=collector.act_dim,
+        hidden_size=512,
+        n_head=8,
+        n_layer=6,
     )
     model = TrainableDT(config)
 
     agent_name = args.dataset.split("/")[-2]
-    output_dir = f"models/dt-{agent_name}"
+    output_dir = f"models/dt-{agent_name}-{time.time()}".replace(".", "")
 
     training_args = TrainingArguments(
         output_dir=output_dir,
