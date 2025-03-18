@@ -125,7 +125,7 @@ class MicroRTSGridModeVecEnv:
 
             registerDomain("agentP")
 
-            extra_jars = ["extra_bots/AgentP.jar"]
+            extra_jars = ["extra_bots/AgentP.jar", "extra_bots/MyValor.jar"]
             for jar in extra_jars:
                 jpype.addClassPath(os.path.join(self.microrts_py_path, jar))
 
@@ -398,7 +398,7 @@ class MicroRTSBotVecEnv(MicroRTSGridModeVecEnv):
 
             registerDomain("agentP")
 
-            extra_jars = ["extra_bots/AgentP.jar"]
+            extra_jars = ["extra_bots/AgentP.jar", "extra_bots/MyValor.jar"]
             for jar in extra_jars:
                 jpype.addClassPath(os.path.join(self.microrts_py_path, jar))
 
