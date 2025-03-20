@@ -30,6 +30,12 @@ def parse_args():
                         help='Number of updates steps to accumulate before performing a backward/update pass')
     parser.add_argument('--mixed-precision', action='store_true', default=False,
                         help='Use mixed precision training')
+    parser.add_argument('--logging-steps', type=int,
+                        default=1, help='how often to log to wandb')
+    parser.add_argument('--scheduler', type=str,
+                        default="linear", help='Learning rate scheduler')
+    parser.add_argument('--model-path', type=str,
+                        help='Path to model to load')
 
     return parser.parse_args()
 
@@ -42,21 +48,24 @@ if __name__ == "__main__":
         raise FileNotFoundError("Dataset not found")
     collector = DecisionTransformerGymDataCollator(dataset["train"])
 
-    config = DecisionTransformerConfig(
-        state_dim=collector.state_dim,
-        act_dim=collector.act_dim,
-        hidden_size=512,
-        n_head=8,
-        n_layer=6,
-    )
-    model = TrainableDT(config)
+    if args.model_path:
+        model = TrainableDT.from_pretrained(args.model_path)
+    else:
+        config = DecisionTransformerConfig(
+            state_dim=collector.state_dim,
+            act_dim=collector.act_dim,
+            hidden_size=512,
+            n_head=8,
+            n_layer=6,
+        )
+        model = TrainableDT(config)
 
     agent_name = args.dataset.split("/")[-2]
     output_dir = f"models/dt-{agent_name}-{time.time()}".replace(".", "")
 
     training_args = TrainingArguments(
         output_dir=output_dir,
-        logging_steps=10,
+        logging_steps=args.logging_steps,
         remove_unused_columns=False,
         num_train_epochs=args.num_train_epochs,
         per_device_train_batch_size=args.per_device_train_batch_size,
@@ -67,6 +76,7 @@ if __name__ == "__main__":
         max_grad_norm=args.max_grad_norm,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         fp16=args.mixed_precision,
+        lr_scheduler_type=args.scheduler,
     )
 
     trainer = Trainer(
@@ -76,4 +86,7 @@ if __name__ == "__main__":
         data_collator=collector,
     )
 
-    trainer.train()
+    if args.model_path:
+        trainer.train(resume_from_checkpoint=True)
+    else:
+        trainer.train()
