@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument('--mixed-precision', action='store_true', default=False,
                         help='Use mixed precision training')
     parser.add_argument('--logging-steps', type=int,
-                        default=1, help='how often to log to wandb')
+                        default=10, help='how often to log to wandb')
     parser.add_argument('--scheduler', type=str,
                         default="linear", help='Learning rate scheduler')
     parser.add_argument('--model-path', type=str,
