@@ -29,6 +29,7 @@ cd MicroRTS-Py
 uv venv --python 3.9
 source .venv/bin/activate
 uv pip install -r requirements.txt
+pwd > .venv/lib/python3.9/site-packages/gym_microrts.pth
 python hello_world.py
 ```
 
