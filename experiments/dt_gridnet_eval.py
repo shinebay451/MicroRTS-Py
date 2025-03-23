@@ -236,7 +236,7 @@ if __name__ == "__main__":
     # variables for decision transformer
     TARGET_RETURN = 10
     dataset = DatasetDict.load_from_disk(
-        "episode_data/cm-mcrp-1742170770231193/save_0")
+        "episode_data/cm-mcrp-dataset-v2/save_0")
     collector = DecisionTransformerGymDataCollator(dataset["train"])
 
     ais = []

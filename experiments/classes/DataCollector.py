@@ -7,7 +7,7 @@ import torch
 @dataclass
 class DecisionTransformerGymDataCollator:
     return_tensors: str = "pt"
-    max_len: int = 100  # subsets of the episode we use for training
+    max_len: int = 500  # subsets of the episode we use for training
     state_dim: int = 1536  # size of state space
     act_dim: int = 19968  # size of action space
     max_ep_len: int = 2000  # max episode length in the dataset

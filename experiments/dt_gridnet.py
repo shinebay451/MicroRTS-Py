@@ -54,9 +54,9 @@ if __name__ == "__main__":
         config = DecisionTransformerConfig(
             state_dim=collector.state_dim,
             act_dim=collector.act_dim,
-            hidden_size=512,
-            n_head=8,
-            n_layer=6,
+            hidden_size=1024,
+            n_head=16,
+            n_layer=12,
         )
         model = TrainableDT(config)
 
