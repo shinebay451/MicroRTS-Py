@@ -55,6 +55,12 @@ def PORangedRush(utt):
 # Competition AIs
 
 
+def lightari(utt):
+    from lightari import lightari
+
+    return lightari(utt)
+
+
 def myValor(utt):
     from ai.coac import MyValorAI
 
