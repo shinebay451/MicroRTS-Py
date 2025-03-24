@@ -175,9 +175,9 @@ if __name__ == "__main__":
                 agent1 = Agent(envs).to(device)
                 agent2 = Agent(envs).to(device)
 
-                agent1.load_state_dict(torch.load(all_bots[i]["path"], map_location=device))
+                agent1.load_state_dict(torch.load(all_bots[i]["path"], map_location=device), strict=False)
                 agent1.eval()
-                agent2.load_state_dict(torch.load(all_bots[j]["path"], map_location=device))
+                agent2.load_state_dict(torch.load(all_bots[j]["path"], map_location=device), strict=False)
                 agent2.eval()
 
                 next_obs = torch.Tensor(envs.reset()).to(device)
@@ -185,9 +185,9 @@ if __name__ == "__main__":
                 agent1 = Agent(envs).to(device)
 
                 if player1_type == "agent":
-                    agent1.load_state_dict(torch.load(all_bots[i]["path"], map_location=device))
+                    agent1.load_state_dict(torch.load(all_bots[i]["path"], map_location=device), strict=False)
                 else:
-                    agent1.load_state_dict(torch.load(all_bots[j]["path"], map_location=device))
+                    agent1.load_state_dict(torch.load(all_bots[j]["path"], map_location=device), strict=False)
                 agent1.eval()
 
                 next_obs = torch.Tensor(envs.reset()).to(device)
