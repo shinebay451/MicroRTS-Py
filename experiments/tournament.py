@@ -175,7 +175,7 @@ if __name__ == "__main__":
                     envs, 
                     f"videos/{exp_name}/{p1_name}-{p2_name}",
                     record_video_trigger=lambda x: x == 0,
-                    video_length=max_ep_length
+                    video_length=max_ep_length*args.games_per_match,
                 )
 
             if mode == 0:
