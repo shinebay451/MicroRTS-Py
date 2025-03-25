@@ -102,9 +102,16 @@ if __name__ == "__main__":
             ai1s = None
             ai2s = None
 
-            p1_name = all_bots[i]["path"].split("/")[-1].split(".")[0] \
+            # determine the delimiter for the bot path (Mac/Linux vs. Windows)
+            if (player1_type == "agent" and "/" in all_bots[i]["path"]) or \
+                    (player2_type == "agent" and "/" in all_bots[j]["path"]):
+                delimiter = "/"
+            else:
+                delimiter = "\\"
+
+            p1_name = all_bots[i]["path"].split(delimiter)[-1].split(".")[0] \
                     if player1_type == "agent" else all_bots[i]["classname"]
-            p2_name = all_bots[j]["path"].split("/")[-1].split(".")[0] \
+            p2_name = all_bots[j]["path"].split(delimiter)[-1].split(".")[0] \
                     if player2_type == "agent" else all_bots[j]["classname"]
 
             if player1_type == "agent" and player2_type == "agent":
