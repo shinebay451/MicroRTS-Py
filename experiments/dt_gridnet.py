@@ -50,6 +50,7 @@ if __name__ == "__main__":
 
     if args.model_path:
         model = TrainableDT.from_pretrained(args.model_path)
+        model.train()
     else:
         config = DecisionTransformerConfig(
             state_dim=collector.state_dim,
@@ -61,11 +62,18 @@ if __name__ == "__main__":
         model = TrainableDT(config)
 
     agent_name = args.dataset.split("/")[-2]
-    output_dir = f"models/dt-{agent_name}-{time.time()}".replace(".", "")
+    if args.model_path:
+        path = args.model_path
+        if path[-1] == "/":
+            path = path[:-1]
+        output_dir = "/".join(path.split("/")[0:-1])
+    else:
+        output_dir = f"models/dt-{agent_name}-{time.time()}".replace(".", "")
 
     training_args = TrainingArguments(
         output_dir=output_dir,
         logging_steps=args.logging_steps,
+        save_steps=50,
         remove_unused_columns=False,
         num_train_epochs=args.num_train_epochs,
         per_device_train_batch_size=args.per_device_train_batch_size,
