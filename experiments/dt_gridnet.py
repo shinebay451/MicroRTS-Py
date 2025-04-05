@@ -36,6 +36,8 @@ def parse_args():
                         default="linear", help='Learning rate scheduler')
     parser.add_argument('--model-path', type=str,
                         help='Path to model to load')
+    parser.add_argument('--save-dir', type=str,
+                        help='Directory to save the model')
 
     return parser.parse_args()
 
@@ -67,6 +69,8 @@ if __name__ == "__main__":
         if path[-1] == "/":
             path = path[:-1]
         output_dir = "/".join(path.split("/")[0:-1])
+    elif args.save_dir:
+        output_dir = f"{args.save_dir}/dt-{agent_name}-{time.time()}".replace(".", "")
     else:
         output_dir = f"models/dt-{agent_name}-{time.time()}".replace(".", "")
 
