@@ -1,10 +1,18 @@
-source ~/myenv/bin/activate
+#!/bin/sh
+#SBATCH --gpus-per-node=1
+#SBATCH -e slurm-%j.err
+#SBATCH -o slurm-%j.out
 
+cd ~/MicroRTS-Py
 
-xvfb-run -a python reinforce_microrts.py \
-    --total-timesteps 10000000 \
-    --num-bot-envs 16 \
-    --num-selfplay-envs 0 \
-    --partial-obs False \
-    --prod-mode \
-    --capture-video
+source .venv/bin/activate
+
+export JAVA_HOME=/usr/lib/jvm/jre/
+
+uv pip install -r requirements.txt
+
+pwd > -venv/lib/python3.9/site-packages/gym_microrts.pth
+python hello_world.py
+
+cd experiments
+python 
